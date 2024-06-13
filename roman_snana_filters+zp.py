@@ -30,6 +30,8 @@ PREFIX_OUTPUT = "ROMAN"
 WRITE_SNANA_FILTER_TRANS = False
 
 
+COLNAME_WAVE = 'Wave'
+
 # if input filter name starts with generic F,
 # replace with more human readable filter band name.
 BAND_MAP = {
@@ -65,24 +67,27 @@ def get_args():
     return args
     # end get_args
 
-def open_filter_trans_files(line0):
+def open_filter_trans_file(line0):
 
     # split first line of Roman-trans file and read list of filters,
     # then open each file
     column_list = line0.split()
 
-    fp_list = []
+    fp_list     = []
     filter_list = []
+    FOUND_FIRST_COLUMN = False
     for colname in column_list:
-    
-        if colname == 'Wave':
+
+        if not FOUND_FIRST_COLUMN:
+            FOUND_FIRST_COLUMN = True
+            #print(f"   xxx found wave colname = {colname}")
             fp_list.append(None)
             filter_list.append(None)
-            continue
+            continue   # skip wave column
         
-        if 'ism' in colname: continue
+        if 'ism' in colname: 
+            continue
                 
-
         if WRITE_SNANA_FILTER_TRANS:
             trans_file = f"{PREFIX_OUTPUT}_{colname}.dat"
             print(f"\t Open {trans_file}")
@@ -94,6 +99,7 @@ def open_filter_trans_files(line0):
 
         filter_list.append(colname)
         
+    #print(f"\n xxx filter_list = {filter_list}\n")
     return fp_list, filter_list
 
 def compute_zp(filt,tr_dict):
@@ -131,7 +137,7 @@ def process_effarea(effarea_file):
     for line in contents:
         if line[0] == '#' : continue
         if FIRST_LINE:
-            fp_list, filter_list = open_filter_trans_files(line)
+            fp_list, filter_list = open_filter_trans_file(line)
             FIRST_LINE = False
             #print(f" Init FILTER_TRANS_DICT for {filter_list}")
             for filt in filter_list:                
@@ -142,6 +148,7 @@ def process_effarea(effarea_file):
         lam_micron = float(val_list_orig[0])
         lam_A      = 10000.0 * lam_micron
         icol = -1
+
         for fp, filt in zip(fp_list,filter_list):
             icol += 1
             if icol==0 : continue
